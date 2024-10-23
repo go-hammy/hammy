@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  hammy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./content:/var/www/html
+    environment:
+      - GO_ENV=production
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
