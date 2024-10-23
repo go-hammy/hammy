@@ -134,7 +134,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request, htaccess *htaccessFun
 	}
 
 	if !strings.Contains(r.URL.Path, ".") {
-		redirectToFile(w, r)
+		if !redirectToFile(w, r) {
+			serve404(w, r, r.URL.Path)
+		}
 		return
 	}
 
@@ -157,14 +159,15 @@ func redirectToIndex(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func redirectToFile(w http.ResponseWriter, r *http.Request) {
+func redirectToFile(w http.ResponseWriter, r *http.Request) bool {
 	extensions := []string{".php", ".html", ".htmlx", ".jpg", ".png", ".zip", ".css", ".js"}
 	for _, ext := range extensions {
 		if _, err := os.Stat("/var/www/html" + r.URL.Path + ext); !os.IsNotExist(err) {
 			http.Redirect(w, r, r.URL.Path+ext, http.StatusMovedPermanently)
-			return
+			return true
 		}
 	}
+	return false
 }
 
 func serveFile(w http.ResponseWriter, r *http.Request) {
@@ -262,14 +265,33 @@ func handlePHPError(w http.ResponseWriter, err error) {
 }
 
 func serve500(w http.ResponseWriter) {
-	hammy500Page, err := os.ReadFile("serverPlugin/pages/hammy-500.html")
+	hammy500Page, err := os.ReadFile("/var/www/html/500.html")
 	if err != nil {
-		log.Printf("Hammy 500 page not found! Serving basic 500 message.")
-		hammy500Page = []byte("<html><body><h1>500 - Internal Server Error</h1><p>Something went wrong on our end.</p></body></html>")
+		log.Printf("500 page not found! Serving default Hammy 500")
+		hammy500Page, err = os.ReadFile("serverPlugin/pages/hammy-500.html")
+		if err != nil {
+			log.Printf("Default Hammy 500 page not found! Serving basic 500 message.")
+			hammy500Page = []byte("<html><body><h1>500 - Internal Server Error</h1><p>An unexpected condition was encountered.</p></body></html>")
+		}
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Write(hammy500Page)
+}
+
+func serve505(w http.ResponseWriter) {
+	hammy505Page, err := os.ReadFile("/var/www/html/505.html")
+	if err != nil {
+		log.Printf("505 page not found! Serving default Hammy 505")
+		hammy505Page, err = os.ReadFile("serverPlugin/pages/hammy-505.html")
+		if err != nil {
+			log.Printf("Default Hammy 505 page not found! Serving basic 505 message.")
+			hammy505Page = []byte("<html><body><h1>505 - HTTP Version Not Supported</h1><p>The server does not support the HTTP protocol version used in the request.</p></body></html>")
+		}
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusHTTPVersionNotSupported)
+	w.Write(hammy505Page)
 }
 
 // setContentType sets the Content-Type header based on the file extension
