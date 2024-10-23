@@ -1,3 +1,19 @@
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀
+⡠⠀⢄⡀⠀⣀⠀⠀⢀⣀⡴⠉⠀⠃⠀⠀⠀⠀⠀⠀
+⢇⠀⠀⣿⣾⣯⣍⣽⣿⣿⣿⡤⢀⠇⠀⠀
+⠀⠑⢼⣿⣿⣿⣿⣿⣿⣿⣿⣷⣷⣤⡀⠀⠀⠀
+⠀⢸⣿⣿⣟⣻⣿⣿⣿⣭⣿⣿⣿⣿⡟⠢⡀⠀
+⠀⢸⡏⢻⣿⢿⣿⣿⣿⡿⣿⡟⣿⠟⠀⠀⣿⣦⠀⠀
+⠀⢸⠛⠮⠝⢋⠙⣻⣊⢁⠈⠚⢃⣀⣴⣾⣿⣿⣷⡀
+m⠀⣾⣶⣤⡠⠀⠉⠀⠈⢀⢀⣾⣿⣿⣿⣿⣿⣿⠿⣧
+⠀⠿⡟⠛⠻⠷⣶⠀⣶⠟⠋⠛⣿⠗⠈⠈⠉⢠⣪⣿
+⠀⠸⡈⠙⣄⡀⢸⢸⡿⣄⡦⠋⠁⠀⠀⠀⡠⣺⣿⣿
+⠀⠀⠙⢢⡤⠙⠛⡏⣅⣠⠶⠖⠒⠒⠈⠁⠐⢾⣿⡏
+⠀⠀⠀⠈⡄⠀⠀⠸⣿⡷⠀⠀⠀⠀⠀⢀⢠⣿⣿⠃
+⠀⠀⠀⠀⠘⠦⣀⠀⣿⣷⣦⠄⠀⠀⠀⢝⣿⣿⡟⠀
+⠀⠀⠀⣤⣤⣄⣊⡉⠟⠿⢿⡷⠗⠚⣲⠽⠿⠟⠁⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠀⠀⠀⠀⠀
+
 # Hammy Project
 
 Welcome to the Hammy Project! Hammy is a lightweight and efficient web server written in Go, designed to serve dynamic and static content with ease. This document will guide you through the structure of the project, how to get started quickly, and how to deploy it using Docker or directly on a server.
@@ -6,13 +22,13 @@ Welcome to the Hammy Project! Hammy is a lightweight and efficient web server wr
 
 The Hammy Project is organized into several key components:
 
-- **serverPlugin**: This is the core of the Hammy server. It handles HTTP requests, serves files, and manages server operations. The serverPlugin is responsible for routing requests, executing PHP files, and serving HTML content.
+- **serverPlugin**: This is the main component of the Hammy server. It processes HTTP requests, delivers files, and oversees server functions. The serverPlugin is tasked with directing requests, running PHP scripts, and delivering HTML files.
 
-- **cachePlugin**: This module is responsible for caching responses to improve performance. Cached responses are stored and served when the same request is made, reducing the need to repeatedly read files from disk.
+- **cacheFunction**: This component enhances performance by storing and retrieving cached responses. It minimizes the need to access files from the disk repeatedly by serving stored responses for identical requests.
 
-- **content**: This directory is intended to be used with Docker or Docker Compose. It contains the static and dynamic content that the server will serve. When using Docker, this directory is mounted to `/var/www/html` inside the container.
+- **content**: This folder is designed for use with Docker or Docker Compose. It holds the static and dynamic content that the server will deliver. In a Docker setup, this directory is mapped to `/var/www/html` within the container.
 
-- **serverPlugin/pages**: This folder contains custom error pages like `hammy-404.html` and `hammy-500.html`, which are served when the server encounters 404 or 500 errors, respectively. These are served when there is no 500.html or php in the original /var/www/html.
+- **serverPlugin/pages**: This directory includes custom error pages such as `hammy-404.html` and `hammy-500.html`, which are displayed when the server encounters 404 or 500 errors, respectively. These pages are used when there is no 500.html or PHP file in the default /var/www/html.
 
 ## Quickstart
 
@@ -48,7 +64,7 @@ If you prefer to run Hammy directly on a server, ensure that `/var/www/html` is 
    ./hammy
    ```
 
-This will start the Hammy server on port 8080, ready to serve content from `/var/www/html`.
+This will start the Hammy server on port 9090, ready to serve content from `/var/www/html`.
 
 ## Deployment Considerations
 

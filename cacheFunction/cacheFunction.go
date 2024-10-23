@@ -18,6 +18,17 @@ var (
 func init() {
 	// Check if the primary cache directory is accessible
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
+		// Attempt to create the primary cache directory
+		if err := os.Mkdir(cacheDir, os.ModePerm); err != nil {
+			log.Printf("Failed to create primary cache directory: %v", err)
+		}
+		// Check if the fallback cache directory is accessible
+		if _, err := os.Stat("./cache/"); os.IsNotExist(err) {
+			// Attempt to create the fallback cache directory
+			if err := os.Mkdir("./cache/", os.ModePerm); err != nil {
+				log.Printf("DANGER: Failed to create fallback cache directory: %v", err)
+			}
+		}
 		// Fallback to the project folder cache directory
 		cacheDir = "./cache/"
 		if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
@@ -53,7 +64,7 @@ func SaveCacheToDisk() error {
 	cacheMutex.RLock()
 	defer cacheMutex.RUnlock()
 	for key, data := range cache {
-		filePath := filepath.Join(cacheDir, key)
+		filePath := filepath.Join(cacheDir, "hammy-cache-"+key)
 		if err := os.WriteFile(filePath, data, os.ModePerm); err != nil {
 			log.Printf("Failed to write cache file %s: %v", filePath, err)
 			continue

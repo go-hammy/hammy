@@ -34,8 +34,7 @@ func LoadConfig() Config {
 	}
 
 	var config Config
-	err = yaml.Unmarshal(file, &config)
-	if err != nil {
+	if err := yaml.Unmarshal(file, &config); err != nil {
 		log.Fatalf("Error parsing config.yaml file: %v", err)
 	}
 
@@ -50,32 +49,21 @@ func StartServer() {
 	log.Printf("Listening on port :%s", config.Port)
 	log.Println("Use ctrl + c to shutdown the server")
 
-	// Load htaccess rules once at startup
 	htaccess := htaccessFunction.NewHtaccessPlugin()
-	err := htaccess.LoadHtaccess("/var/www/html/.htaccess")
-	if err != nil {
+	if err := htaccess.LoadHtaccess("/var/www/html/.htaccess"); err != nil {
 		log.Printf("Error loading .htaccess file: %v", err)
 	}
 
 	server := createServer(config, htaccess)
 
-	// Channel to listen for interrupt or terminate signals
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 
-	// Run server in a goroutine
-	go func() {
-		startServer(server)
-	}()
+	go startServer(server)
 
-	// Block until a signal is received
 	<-stop
-
 	log.Println("Shutting down the server...")
-
-	// Attempt graceful shutdown
 	shutdownServer(server)
-
 	log.Println("Server exiting")
 }
 
@@ -83,9 +71,7 @@ func StartServer() {
 func createServer(config Config, htaccess *htaccessFunction.HtaccessPlugin) *http.Server {
 	return &http.Server{
 		Addr:           ":" + config.Port,
-		Handler:        securityHeadersMiddleware(gzipMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			handleRequest(w, r, htaccess)
-		}))),
+		Handler:        securityHeadersMiddleware(gzipMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { handleRequest(w, r, htaccess) }))),
 		ReadTimeout:    config.ReadTimeout,
 		WriteTimeout:   config.WriteTimeout,
 		IdleTimeout:    config.IdleTimeout,
@@ -96,10 +82,15 @@ func createServer(config Config, htaccess *htaccessFunction.HtaccessPlugin) *htt
 // securityHeadersMiddleware sets security headers for each request
 func securityHeadersMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Strict-Transport-Security", "max-age=63072000; includeSubDomains")
-		w.Header().Set("X-Content-Type-Options", "nosniff")
-		w.Header().Set("X-Frame-Options", "DENY")
-		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline';")
+		headers := map[string]string{
+			"Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+			"X-Content-Type-Options":    "nosniff",
+			"X-Frame-Options":           "DENY",
+			"Content-Security-Policy":   "default-src 'self'; script-src 'self' 'unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline';",
+		}
+		for k, v := range headers {
+			w.Header().Set(k, v)
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -132,137 +123,171 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 func handleRequest(w http.ResponseWriter, r *http.Request, htaccess *htaccessFunction.HtaccessPlugin) {
 	w.Header().Set("Server", "HAMMY v1.0")
 
-	// Apply htaccess rules
 	htaccess.ApplyHtaccess(w, r)
 	if w.Header().Get("Content-Type") == "text/html; charset=utf-8" {
 		return
 	}
 
-	// Redirect to the appropriate index file if the root is accessed
 	if r.URL.Path == "/" {
-		extensions := []string{".php", ".html", ".htmlx"}
-		for _, ext := range extensions {
-			if _, err := os.Stat("/var/www/html/index" + ext); !os.IsNotExist(err) {
-				http.Redirect(w, r, "/index"+ext, http.StatusMovedPermanently)
-				return
-			}
-		}
+		redirectToIndex(w, r)
+		return
 	}
 
-	// Redirect to corresponding file if a path without extension is accessed
 	if !strings.Contains(r.URL.Path, ".") {
-		extensions := []string{".php", ".html", ".htmlx", ".jpg", ".png", ".zip", ".css", ".js"}
-		for _, ext := range extensions {
-			if _, err := os.Stat("/var/www/html" + r.URL.Path + ext); !os.IsNotExist(err) {
-				http.Redirect(w, r, r.URL.Path+ext, http.StatusMovedPermanently)
-				return
-			}
-		}
+		redirectToFile(w, r)
+		return
 	}
 
-	// Check if the response is cached
 	if cachedResponse, found := cacheFunction.GetFromCache(r.URL.Path); found {
 		setContentType(w, r.URL.Path)
 		w.Write(cachedResponse)
 		return
 	}
 
-	// Serve the requested file
+	serveFile(w, r)
+}
+
+func redirectToIndex(w http.ResponseWriter, r *http.Request) {
+	extensions := []string{".php", ".html", ".htmlx"}
+	for _, ext := range extensions {
+		if _, err := os.Stat("/var/www/html/index" + ext); !os.IsNotExist(err) {
+			http.Redirect(w, r, "/index"+ext, http.StatusMovedPermanently)
+			return
+		}
+	}
+}
+
+func redirectToFile(w http.ResponseWriter, r *http.Request) {
+	extensions := []string{".php", ".html", ".htmlx", ".jpg", ".png", ".zip", ".css", ".js"}
+	for _, ext := range extensions {
+		if _, err := os.Stat("/var/www/html" + r.URL.Path + ext); !os.IsNotExist(err) {
+			http.Redirect(w, r, r.URL.Path+ext, http.StatusMovedPermanently)
+			return
+		}
+	}
+}
+
+func serveFile(w http.ResponseWriter, r *http.Request) {
 	filePath := "/var/www/html" + r.URL.Path
 	if filePath == "/var/www/html/" {
 		filePath = "/var/www/html/index.html"
 	}
 
-	extensions := []string{".php", ".html", ".htmlx", ".jpg", ".png", ".zip", ".css", ".js"}
-	fileExists := false
-	for _, ext := range extensions {
-		if _, err := os.Stat(filePath + ext); !os.IsNotExist(err) {
-			filePath += ext
-			fileExists = true
-			break
+	if !fileExists(filePath) {
+		if isEmptyDir("/var/www/html") {
+			log.Printf("No content found for Path=%s and /var/www/html is empty, serving Hammy index\n", r.URL.Path)
+			http.ServeFile(w, r, "serverPlugin/pages/hammy-index.html")
+			return
 		}
-	}
-
-	if !fileExists {
-		log.Printf("No content found for Path=%s, serving Hammy index\n", r.URL.Path)
-		http.ServeFile(w, r, "serverPlugin/pages/hammy-index.html")
-		return
 	}
 
 	content, err := os.ReadFile(filePath)
 	if err != nil {
-		log.Printf("File not found: Path=%s, URL=%s\n", filePath, r.URL.Path)
-
-		customErrorPage, err := os.ReadFile("/var/www/html/404.html")
-		if err != nil {
-			log.Printf("404 page not found! Serving default Hammy 404")
-			customErrorPage, err = os.ReadFile("serverPlugin/pages/hammy-404.html")
-			if err != nil {
-				log.Printf("Default Hammy 404 page not found! Serving basic 404 message.")
-				customErrorPage = []byte("<html><body><h1>404 - File Not Found</h1><p>The requested file could not be found.</p></body></html>")
-			}
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.WriteHeader(http.StatusNotFound)
-		w.Write(customErrorPage)
+		serve404(w, r, filePath)
 		return
 	}
 
-	// If the file is a PHP file, execute it
 	if strings.HasSuffix(filePath, ".php") {
-		cmd := exec.Command("php", filePath)
-		output, err := cmd.Output()
-		if err != nil {
-			if strings.Contains(err.Error(), "exec: \"php\": executable file not found in $PATH") {
-				log.Printf("PHP execution error: %v", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				w.Write([]byte("Error executing PHP file! PHP is not installed!"))
-				return
-			}
-			log.Printf("Error executing PHP file: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-
-			hammy500Page, err := os.ReadFile("serverPlugin/pages/hammy-500.html")
-			if err != nil {
-				log.Printf("Hammy 500 page not found! Serving basic 500 message.")
-				hammy500Page = []byte("<html><body><h1>500 - Internal Server Error</h1><p>Something went wrong on our end.</p></body></html>")
-			}
-			w.Header().Set("Content-Type", "text/html; charset=utf-8")
-			w.Write(hammy500Page)
-			return
-		}
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write(output)
+		executePHP(w, filePath)
 		return
 	}
 
-	// Set the appropriate content type for the file
 	setContentType(w, filePath)
-
-	// Write content to response
 	w.Write(content)
-
-	// Cache the response
 	cacheFunction.AddToCache(r.URL.Path, content)
+}
+
+func fileExists(filePath string) bool {
+	extensions := []string{".php", ".html", ".htmlx", ".jpg", ".png", ".zip", ".css", ".js"}
+	for _, ext := range extensions {
+		if _, err := os.Stat(filePath + ext); !os.IsNotExist(err) {
+			return true
+		}
+	}
+	return false
+}
+
+func isEmptyDir(dir string) bool {
+	files, err := os.ReadDir(dir)
+	if err != nil {
+		log.Printf("Error accessing %s directory: %v", dir, err)
+		return false
+	}
+	for _, file := range files {
+		if !file.IsDir() {
+			return false
+		}
+	}
+	return true
+}
+
+func serve404(w http.ResponseWriter, r *http.Request, filePath string) {
+	log.Printf("File not found: Path=%s, URL=%s\n", filePath, r.URL.Path)
+
+	customErrorPage, err := os.ReadFile("/var/www/html/404.html")
+	if err != nil {
+		log.Printf("404 page not found! Serving default Hammy 404")
+		customErrorPage, err = os.ReadFile("serverPlugin/pages/hammy-404.html")
+		if err != nil {
+			log.Printf("Default Hammy 404 page not found! Serving basic 404 message.")
+			customErrorPage = []byte("<html><body><h1>404 - File Not Found</h1><p>The requested file could not be found.</p></body></html>")
+		}
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusNotFound)
+	w.Write(customErrorPage)
+}
+
+func executePHP(w http.ResponseWriter, filePath string) {
+	cmd := exec.Command("php", filePath)
+	output, err := cmd.Output()
+	if err != nil {
+		handlePHPError(w, err)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write(output)
+}
+
+func handlePHPError(w http.ResponseWriter, err error) {
+	if strings.Contains(err.Error(), "exec: \"php\": executable file not found in $PATH") {
+		log.Printf("PHP execution error: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Error executing PHP file! PHP is not installed!"))
+		return
+	}
+	log.Printf("Error executing PHP file: %v", err)
+	w.WriteHeader(http.StatusInternalServerError)
+	serve500(w)
+}
+
+func serve500(w http.ResponseWriter) {
+	hammy500Page, err := os.ReadFile("serverPlugin/pages/hammy-500.html")
+	if err != nil {
+		log.Printf("Hammy 500 page not found! Serving basic 500 message.")
+		hammy500Page = []byte("<html><body><h1>500 - Internal Server Error</h1><p>Something went wrong on our end.</p></body></html>")
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusInternalServerError)
+	w.Write(hammy500Page)
 }
 
 // setContentType sets the Content-Type header based on the file extension
 func setContentType(w http.ResponseWriter, filePath string) {
 	ext := strings.ToLower(filepath.Ext(filePath))
-	switch ext {
-	case ".html", ".htmlx":
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	case ".js":
-		w.Header().Set("Content-Type", "application/javascript")
-	case ".jpg", ".jpeg":
-		w.Header().Set("Content-Type", "image/jpeg")
-	case ".png":
-		w.Header().Set("Content-Type", "image/png")
-	case ".zip":
-		w.Header().Set("Content-Type", "application/zip")
-	case ".css":
-		w.Header().Set("Content-Type", "text/css")
-	default:
+	contentTypes := map[string]string{
+		".html":  "text/html; charset=utf-8",
+		".htmlx": "text/html; charset=utf-8",
+		".js":    "application/javascript",
+		".jpg":   "image/jpeg",
+		".jpeg":  "image/jpeg",
+		".png":   "image/png",
+		".zip":   "application/zip",
+		".css":   "text/css",
+	}
+	if contentType, found := contentTypes[ext]; found {
+		w.Header().Set("Content-Type", contentType)
+	} else {
 		w.Header().Set("Content-Type", "application/octet-stream")
 	}
 }
