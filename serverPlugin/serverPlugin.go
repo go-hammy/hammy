@@ -45,6 +45,8 @@ func LoadConfig() Config {
 func StartServer() {
 	config := LoadConfig()
 
+	
+
 	log.Println("Webserver is starting...")
 	log.Printf("Listening on port :%s", config.Port)
 	log.Println("Use ctrl + c to shutdown the server")
@@ -330,3 +332,4 @@ func shutdownServer(server *http.Server) {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 }
+
