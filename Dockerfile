@@ -21,11 +21,7 @@ RUN rm -rf /app/content
 RUN go build -o main .
 
 # Create the directory for mounting content
-RUN mkdir -p /var/www/html
-
-RUN mkdir -p /var/log/hammy
-
-RUN mkdir -P /var/cache/hammy
+RUN mkdir -p /var/www/html && mkdir -p /var/log/hammy && mkdir -p /var/cache/hammy || true
 
 # Expose the port that the application will run on
 EXPOSE 9090
