@@ -19,11 +19,17 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Read hammyVersion from config.yaml
+        id: read-version
+        run: |
+          hammyVersion=$(grep 'hammyVersion' config.yaml | awk -F": " '{print $2}')
+          echo "hammyVersion=$hammyVersion" >> $GITHUB_ENV
+
       - name: Build Docker image with version tag
-        run: docker build -t ${{ secrets.DOCKER_USER }}/hammy:v1 .
+        run: docker build -t ${{ secrets.DOCKER_USER }}/hammy:${{ env.hammyVersion }} .
 
       - name: Push Docker image with version tag
-        run: docker push ${{ secrets.DOCKER_USER }}/hammy:v1
+        run: docker push ${{ secrets.DOCKER_USER }}/hammy:${{ env.hammyVersion }}
 
       - name: Build Docker image with latest tag
         run: docker build -t ${{ secrets.DOCKER_USER }}/hammy:latest .
