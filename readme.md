@@ -2,6 +2,8 @@
 
 Welcome to the Hammy Project! Hammy is a lightweight and efficient web server written in Go, designed to serve dynamic and static content with ease. This document will guide you through the structure of the project, how to get started quickly, and how to deploy it using Docker or directly on a server.
 
+[![Docker Hub](https://img.shields.io/badge/Docker%20Hub-View%20Image-blue)](https://hub.docker.com/r/gohammy/hammy)
+
 ## Project Structure
 
 The Hammy Project is organized into several key components:
