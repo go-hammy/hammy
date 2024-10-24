@@ -19,7 +19,8 @@ import (
 
 // Config holds server configuration settings
 type Config struct {
-	Port           string        `yaml:"server_port"`
+	Port           string        `yaml:"serverPort"`
+	HammyVersion   string 			 `yaml:"hammyVersion"`
 	ReadTimeout    time.Duration `yaml:"read_timeout"`
 	WriteTimeout   time.Duration `yaml:"write_timeout"`
 	IdleTimeout    time.Duration `yaml:"idle_timeout"`
@@ -123,7 +124,7 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 
 // handleRequest handles incoming HTTP requests and responds with appropriate content
 func handleRequest(w http.ResponseWriter, r *http.Request, htaccess *htaccessFunction.HtaccessPlugin) {
-	w.Header().Set("Server", "HAMMY v1.0")
+	w.Header().Set("Server", "HAMMY " + LoadConfig().HammyVersion)
 
 	htaccess.ApplyHtaccess(w, r)
 	if w.Header().Get("Content-Type") == "text/html; charset=utf-8" {
@@ -180,7 +181,7 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 
 	if !fileExists(filePath) {
 		if isEmptyDir("/var/www/html") {
-			log.Printf("No content found for Path=%s and /var/www/html is empty, serving Hammy index\n", r.URL.Path)
+			log.Printf("No content found for Path=/ and /var/www/html is empty, serving Hammy index\n")
 			r.URL.Path = "/"
 			http.ServeFile(w, r, "serverPlugin/pages/hammy-index.html")
 			return
