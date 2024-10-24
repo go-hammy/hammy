@@ -4,8 +4,8 @@ FROM golang:latest
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install PHP
-RUN apk add --no-cache php
+# # Install PHP
+# RUN apk add --no-cache php
 
 # Copy the go.mod and go.sum files to the working directory
 COPY go.mod ./
