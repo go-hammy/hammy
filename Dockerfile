@@ -15,7 +15,7 @@ RUN go mod download
  
 # Copy the rest of the application code to the working directory, excluding the content directory
 COPY . /app
-RUN rm -rf /app/content /app/static /app/cache /app/docker-compose.yaml /app/kubernetes.yaml /app/readme.md
+RUN rm -rf /app/content /app/cache /app/docker-compose.yaml /app/kubernetes.yaml /app/readme.md /app/examples
 
 
 # Build the Go application
