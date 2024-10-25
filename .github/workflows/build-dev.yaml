@@ -4,7 +4,7 @@ on:
     branches-ignore:
       - main
 jobs:
-  build-and-upload:
+  development:
     runs-on: ubuntu-latest
     environment: development
     steps:
