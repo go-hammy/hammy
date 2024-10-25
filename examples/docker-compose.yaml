@@ -1,0 +1,13 @@
+#This example provides a Docker-compose file wich starts the latest image for hammy.
+version: "3.8"
+
+services:
+  hammy:
+    image: gohammy/hammy:latest
+    volumes:
+      - ./content:/var/www/html
+    environment:
+      - GO_ENV=production
+    restart: unless-stopped
+    ports:
+      - "9090:9090"

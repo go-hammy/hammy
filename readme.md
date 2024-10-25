@@ -4,57 +4,13 @@ Welcome to the Hammy Project! Hammy is a lightweight and efficient web server wr
 
 [![Docker Hub](https://img.shields.io/badge/Docker%20Hub-View%20Image-blue)](https://hub.docker.com/r/gohammy/hammy)
 
-## Project Structure
-
-The Hammy Project is organized into several key components:
-
-- **serverPlugin**: This is the main component of the Hammy server. It processes HTTP requests, delivers files, and oversees server functions. The serverPlugin is tasked with directing requests, running PHP scripts, and delivering HTML files.
-
-- **cacheFunction**: This component enhances performance by storing and retrieving cached responses. It minimizes the need to access files from the disk repeatedly by serving stored responses for identical requests.
-
-- **content**: This folder is designed for use with Docker or Docker Compose. It holds the static and dynamic content that the server will deliver. In a Docker setup, this directory is mapped to `/var/www/html` within the container.
-
-- **serverPlugin/pages**: This directory includes custom error pages such as `hammy-404.html` and `hammy-500.html`, which are displayed when the server encounters 404 or 500 errors, respectively. These pages are used when there is no 500.html or PHP file in the default /var/www/html.
-
 ## Quickstart
 
-### Using Docker
-
-To quickly get started with Hammy using Docker, follow these steps:
-
-1. **Build the Docker Image**:
-
-   ```bash
-   docker-compose build
-   ```
-
-2. **Run the Docker Container**:
-   ```bash
-   docker-compose up
-   ```
-
-This will start the Hammy server inside a Docker container, serving content from the `content` directory.
-
-### Running on a Server
-
-If you prefer to run Hammy directly on a server, ensure that `/var/www/html` is populated with your content. Then, follow these steps:
-
-1. **Build the Go Application**:
-
-   ```bash
-   go build -o hammy
-   ```
-
-2. **Run the Server**:
-   ```bash
-   ./hammy
-   ```
-
-This will start the Hammy server on port 9090, ready to serve content from `/var/www/html`.
+Get started quickly via https://gohammy.org/getting-started
 
 ## Deployment Considerations
 
-Hammy is designed to be run behind a cloud-based reverse proxy, such as those used in Kubernetes environments. This setup helps maintain its speed and lightweight nature. Hammy does not support SSL by default, but it can handle SSL termination when forwarded through a reverse proxy.
+Hammy is optimally configured to operate behind a cloud-based reverse proxy, commonly utilized in Kubernetes environments. This configuration ensures that Hammy remains both fast and lightweight. While Hammy does not natively support SSL, it is capable of managing SSL termination when routed through a reverse proxy. The choice to expose Hammy on port 9090, rather than the standard port 80, underscores the importance of always running it behind a reverse proxy for enhanced security and performance.
 
 ## Conclusion
 
