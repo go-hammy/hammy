@@ -24,6 +24,6 @@ func PrintBanner() {
 	fmt.Println("\033[38;2;255;180;0m⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠀⠀⠀⠀⠀\033[0m")
 	fmt.Println("\033[1m\033[38;2;255;155;0mProject Hammy\033[0m")
 	fmt.Println("\033[1m\033[38;2;255;130;0mLightning fast Go (" + fmt.Sprintf("%s", runtime.Version()) + ") Webserver\033[0m")
-	fmt.Println("\033[1m\033[38;2;255;105;0mhttps://ricardomolendijk.com/\033[0m")
+	fmt.Println("\033[1m\033[38;2;255;105;0mhttps://gohammy.org/\033[0m")
 	fmt.Println("\033[0m") // Reset text color
 }
