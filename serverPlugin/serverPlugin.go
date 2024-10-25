@@ -20,7 +20,7 @@ import (
 // Config holds server configuration settings
 type Config struct {
 	Port           string        `yaml:"serverPort"`
-	HammyVersion   string 			 `yaml:"hammyVersion"`
+	HammyVersion   string        `yaml:"hammyVersion"`
 	ReadTimeout    time.Duration `yaml:"read_timeout"`
 	WriteTimeout   time.Duration `yaml:"write_timeout"`
 	IdleTimeout    time.Duration `yaml:"idle_timeout"`
@@ -46,8 +46,6 @@ func LoadConfig() Config {
 func StartServer() {
 	config := LoadConfig()
 
-	
-
 	log.Println("Webserver is starting...")
 	log.Printf("Listening on port :%s", config.Port)
 	log.Println("Use ctrl + c to shutdown the server")
@@ -62,7 +60,11 @@ func StartServer() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt)
 
-	go startServer(server)
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Could not listen on %s: %v\n", server.Addr, err)
+		}
+	}()
 
 	<-stop
 	log.Println("Shutting down the server...")
@@ -84,13 +86,13 @@ func createServer(config Config, htaccess *htaccessFunction.HtaccessPlugin) *htt
 
 // securityHeadersMiddleware sets security headers for each request
 func securityHeadersMiddleware(next http.Handler) http.Handler {
+	headers := map[string]string{
+		"Strict-Transport-Security": "max-age=63072000; includeSubDomains",
+		"X-Content-Type-Options":    "nosniff",
+		"X-Frame-Options":           "DENY",
+		"Content-Security-Policy":   "default-src 'self'; script-src 'self' 'unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline';",
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		headers := map[string]string{
-			"Strict-Transport-Security": "max-age=63072000; includeSubDomains",
-			"X-Content-Type-Options":    "nosniff",
-			"X-Frame-Options":           "DENY",
-			"Content-Security-Policy":   "default-src 'self'; script-src 'self' 'unsafe-eval'; object-src 'none'; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline';",
-		}
 		for k, v := range headers {
 			w.Header().Set(k, v)
 		}
@@ -124,7 +126,7 @@ func (w gzipResponseWriter) Write(b []byte) (int, error) {
 
 // handleRequest handles incoming HTTP requests and responds with appropriate content
 func handleRequest(w http.ResponseWriter, r *http.Request, htaccess *htaccessFunction.HtaccessPlugin) {
-	w.Header().Set("Server", "HAMMY " + LoadConfig().HammyVersion)
+	w.Header().Set("Server", "HAMMY "+LoadConfig().HammyVersion)
 
 	htaccess.ApplyHtaccess(w, r)
 	if w.Header().Get("Content-Type") == "text/html; charset=utf-8" {
@@ -318,13 +320,6 @@ func setContentType(w http.ResponseWriter, filePath string) {
 	}
 }
 
-// startServer starts the HTTP server and logs any errors
-func startServer(server *http.Server) {
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Could not listen on %s: %v\n", server.Addr, err)
-	}
-}
-
 // shutdownServer attempts a graceful shutdown of the server
 func shutdownServer(server *http.Server) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -334,4 +329,3 @@ func shutdownServer(server *http.Server) {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 }
-

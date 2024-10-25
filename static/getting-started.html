@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Getting Started with Hammy</title>
+    <style>
+      body {
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .container {
+        text-align: center;
+        max-width: 800px;
+        padding: 20px;
+      }
+      h1 {
+        font-size: 3em;
+        color: #ff6f61;
+      }
+      h2 {
+        font-size: 2em;
+        color: #ff6f61;
+        margin-top: 20px;
+      }
+      p {
+        font-size: 1.2em;
+        line-height: 1.6;
+      }
+      pre {
+        background-color: #333;
+        padding: 10px;
+        border-radius: 5px;
+        overflow-x: auto;
+      }
+      code {
+        color: #ff6f61;
+      }
+      a {
+        color: #ff6f61;
+        text-decoration: none;
+        font-weight: bold;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Getting Started with Hammy</h1>
+
+      <h2>Build from Go</h2>
+      <p>To get started with Hammy using Go, follow these steps:</p>
+      <pre><code>git clone https://github.com/yourusername/hammy.git
+cd hammy
+go build -o hammy-server
+./hammy-server</code></pre>
+
+      <h2>Running Hammy in Docker</h2>
+      <p>To run Hammy using Docker, use the following commands:</p>
+      <pre><code>docker build -t hammy .
+docker run -p 9090:9090 hammy</code></pre>
+
+      <h2>Kubernetes Example</h2>
+      <p>
+        To deploy Hammy using Kubernetes, apply the provided YAML configuration:
+      </p>
+      <pre><code>kubectl apply -f kubernetes.yaml</code></pre>
+
+      <p>
+        For more detailed instructions, visit our
+        <a href="https://gohammy.org/docs">documentation</a>.
+      </p>
+    </div>
+  </body>
+</html>

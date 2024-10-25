@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 )
 
@@ -16,28 +17,33 @@ var (
 )
 
 func init() {
-	// Check if the primary cache directory is accessible
-	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
-		// Attempt to create the primary cache directory
+	ensureCacheDirectory()
+}
+
+// ensureCacheDirectory checks and creates the necessary cache directories
+func ensureCacheDirectory() {
+	if !isDirectoryAccessible(cacheDir) {
 		if err := os.Mkdir(cacheDir, os.ModePerm); err != nil {
 			log.Printf("Failed to create primary cache directory: %v", err)
 		}
-		// Check if the fallback cache directory is accessible
-		if _, err := os.Stat("./cache/"); os.IsNotExist(err) {
-			// Attempt to create the fallback cache directory
+		if !isDirectoryAccessible("./cache/") {
 			if err := os.Mkdir("./cache/", os.ModePerm); err != nil {
 				log.Printf("DANGER: Failed to create fallback cache directory: %v", err)
 			}
 		}
-		// Fallback to the project folder cache directory
 		cacheDir = "./cache/"
-		if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
-			// Create the cache directory if it doesn't exist
+		if !isDirectoryAccessible(cacheDir) {
 			if err := os.Mkdir(cacheDir, os.ModePerm); err != nil {
 				log.Fatalf("Failed to create cache directory: %v", err)
 			}
 		}
 	}
+}
+
+// isDirectoryAccessible checks if a directory is accessible
+func isDirectoryAccessible(dir string) bool {
+	_, err := os.Stat(dir)
+	return !os.IsNotExist(err)
 }
 
 // GetFromCache retrieves data from the cache
@@ -64,7 +70,7 @@ func SaveCacheToDisk() error {
 	cacheMutex.RLock()
 	defer cacheMutex.RUnlock()
 	for key, data := range cache {
-		filePath := filepath.Join(cacheDir, "hammy-cache-"+key)
+		filePath := filepath.Join(cacheDir, sanitizeFileName(key))
 		if err := os.WriteFile(filePath, data, os.ModePerm); err != nil {
 			log.Printf("Failed to write cache file %s: %v", filePath, err)
 			continue
@@ -92,4 +98,9 @@ func LoadCacheFromDisk() error {
 		cache[file.Name()] = data
 	}
 	return nil
+}
+
+// sanitizeFileName ensures the file name is safe for use in the file system
+func sanitizeFileName(name string) string {
+	return strings.ReplaceAll(name, "/", "_")
 }
