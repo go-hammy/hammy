@@ -1,4 +1,4 @@
-name: "Build and Upload Docker Image"
+name: "Prod: Build and Upload Docker Image"
 on:
   push:
     branches:
