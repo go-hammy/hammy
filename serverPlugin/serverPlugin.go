@@ -181,7 +181,7 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 		filePath = "/var/www/html/index.html"
 	}
 
-	if !fileExists(filePath) {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		if isEmptyDir("/var/www/html") {
 			log.Println("No content found, and /var/www/html is empty, serving Hammy index")
 			http.ServeFile(w, r, "serverPlugin/pages/hammy-index.html")
