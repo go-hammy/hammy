@@ -159,7 +159,9 @@ func handleRequest(w http.ResponseWriter, r *http.Request, htaccess *htaccessFun
 	}
 
 	if r.URL.Path == "/" {
-		redirectToIndex(w, r)
+		if !redirectToIndex(w, r) {
+			serveCustomErrorPage(w, http.StatusNotFound, "/var/www/html/404.html", "serverPlugin/pages/hammy-404.html", "404 - File Not Found")
+		}
 		return
 	}
 
@@ -188,14 +190,15 @@ func setContentType(w http.ResponseWriter, path string) {
 	}
 }
 
-func redirectToIndex(w http.ResponseWriter, r *http.Request) {
+func redirectToIndex(w http.ResponseWriter, r *http.Request) bool {
 	extensions := []string{".php", ".html", ".htmlx"}
 	for _, ext := range extensions {
 		if _, err := os.Stat("/var/www/html/index" + ext); !os.IsNotExist(err) {
 			http.Redirect(w, r, "/index"+ext, http.StatusMovedPermanently)
-			return
+			return true
 		}
 	}
+	return false
 }
 
 func redirectToFile(w http.ResponseWriter, r *http.Request) bool {
@@ -278,6 +281,7 @@ func isEmptyDir(name string) bool {
 	_, err = dir.Readdir(1)
 	return err == io.EOF
 }
+
 func shutdownServer(server *http.Server) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
