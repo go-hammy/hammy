@@ -183,8 +183,7 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 
 	if !fileExists(filePath) {
 		if isEmptyDir("/var/www/html") {
-			log.Printf("No content found for Path=/ and /var/www/html is empty, serving Hammy index\n")
-			r.URL.Path = "/"
+			log.Printf("No content found, and /var/www/html is empty, serving Hammy index\n")
 			http.ServeFile(w, r, "serverPlugin/pages/hammy-index.html")
 			return
 		}
@@ -297,7 +296,9 @@ func serve505(w http.ResponseWriter) {
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusHTTPVersionNotSupported)
-	w.Write(hammy505Page)
+	if _, err := w.Write(hammy505Page); err != nil {
+		log.Printf("Error writing 505 response: %v", err)
+	}
 }
 
 // setContentType sets the Content-Type header based on the file extension

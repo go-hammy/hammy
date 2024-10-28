@@ -7,7 +7,7 @@ import (
 
 // PrintBanner prints the ASCII art banner with color
 func PrintBanner() {
-	fmt.Println("\033[38;2;255;0;0m⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀\033[0m")
+	fmt.Println("\033[38;2;255;0;0m⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⣀⠀⠀⠀⠀⠀⠀⠀\033[0m")
 	fmt.Println("\033[38;2;255;25;0m⡠⠀⢄⡀⠀⣀⠀⠀⢀⣀⡴⠉⠀⠃⠀⠀⠀⠀⠀⠀\033[0m")
 	fmt.Println("\033[38;2;255;50;0m⢇⠀⠀⣿⣾⣯⣍⣽⣿⣿⣿⡤⢀⠇⠀⠀⠀⠀⠀⠀\033[0m")
 	fmt.Println("\033[38;2;255;75;0m⠀⠑⢼⣿⣿⣿⣿⣿⣿⣿⣿⣷⣷⣤⡀⠀⠀⠀⠀⠀\033[0m")
